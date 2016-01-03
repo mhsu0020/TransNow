@@ -93,6 +93,7 @@
  </ul>
 </script>
 <script>
+var halted = false;
 function postToEricsson(data, path, callback){
   var _domain = "http://charlie.hack.att.io:3000";
   var _authUser = "provider";
@@ -219,9 +220,10 @@ function getFromEricsson(path, callback){
                                     var selectedStop = $( "#stopSelect" ).find(":selected").attr("stopid");
                                     console.log(selectedStop);
                                     var selectedStopIndex = 0;
-                                    if( requestedData.statusReport.currentStopId == selectedStop){
+                                    if( requestedData.statusReport.currentStopId == selectedStop && !halted){
                                       alert("Bus is at station!!!!!");
                                       $( "#stopData" ).append('<button id="goButton" type="button" class="btn btn-danger">Halt for me!</button>');
+                                      halted = true;
                                     }
 
                                   })
