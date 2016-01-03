@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>TransNow</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <style>
+    body {
+        padding-top: 70px;
+        /* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
+    }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">TransNow</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a href="#">About</a>
+                    </li>
+                    <li>
+                        <a href="#">Services</a>
+                    </li>
+                    <li>
+                        <a href="#">Contact</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container">
+
+        <div class="row">
+            <div id="content" class="col-lg-12 text-center">
+                <h1>TransNow</h1>
+                <h2>Stay Inside or Go to Station Now?</h2>
+                <span>Select Route: </span>
+                <select id="routeSelect"></select>
+                <br><br>
+                <select id="stopSelect"></select><br><br>
+                <button id="goButton" type="button" class="btn btn-primary">Go</button>
+                <div id="stopData"></div>
+            </div>
+        </div>
+        <!-- /.row -->
+
+    </div>
+    <!-- /.container -->
+    <!-- jQuery Version 1.11.1 -->
+    <script src="js/jquery.js"></script>
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/underscore-min.js"></script>
+    <script src="js/busroutes.js"></script>
+    <script type="text/html" id='routeDropDown'>
+  </script>
+  <!-- BEGIN: Underscore Template Definition. -->
+<script type="text/template" id="ericssonProperties">
+  <ul class="list-group">
+  <% _.each(_.keys(properties), function(propertyKey) { %>
+       <li class="list-group-item"><b><%= propertyKey %>: </b><%= properties[propertyKey] %></li>
+   <% }); %>
+ </ul>
+</script>
+<script>
+function postToEricsson(data, path, callback){
+  var _domain = "http://charlie.hack.att.io:3000";
+  var _authUser = "provider";
+  var _authPass = "1234";
+  var _apiKey = "api-key-1234";
+  $.ajax({
+  type: "POST",
+  beforeSend: function (xhr){
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.setRequestHeader("Authorization", "Basic " + btoa(_authUser + ":" + _authPass));
+    xhr.setRequestHeader("APIKey", _apiKey);
+    xhr.setRequestHeader('Accept', 'application/json');
+  },
+  url:  _domain+path,
+  data: JSON.stringify(data),
+  success: function(data){
+    console.log("success: "+data);
+    callback(data);
+  },
+});
+
+}
+function getFromEricsson(path, callback){
+  var _domain = "http://charlie.hack.att.io:3000";
+  var _authUser = "provider";
+  var _authPass = "1234";
+  var _apiKey = "api-key-1234";
+  $.ajax({
+  type: "GET",
+  beforeSend: function (xhr){
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.setRequestHeader("Authorization", "Basic " + btoa(_authUser + ":" + _authPass));
+    xhr.setRequestHeader("APIKey", _apiKey);
+    xhr.setRequestHeader('Accept', 'application/json');
+  },
+  url:  _domain+path,
+  success: function(data){
+    console.log("success get: "+data);
+    callback(data);
+  },
+});
+
+}
+    $(function() {
+      var routesForEachStop = {};
+      var routeIdObjectMap = {};
+        for(var i=0; i<busroutes.length; i++){
+          routeIdObjectMap[busroutes[i].routeId] =  busroutes[i];
+          $("#routeSelect").append("<option routeId = '" +  busroutes[i].routeId +"'>" + busroutes[i].routeId + "</option>");
+              for(var j=0; j<busroutes[i].stops.length; j++){
+                var busStop = busroutes[i].stops[j];
+                if(!_.has(routesForEachStop, busStop.stopId)){
+                  routesForEachStop[busStop.stopId] = [];
+                  routesForEachStop[busStop.stopId].push(busroutes[i].routeId);
+                } else{
+                  routesForEachStop[busStop.stopId].push(busroutes[i].routeId);
+                }
+              }
+        }
+
+        $( "#routeSelect" ).change(function() {
+            var selectedRoute = $( "#routeSelect" ).find(":selected").attr("routeid");
+            var stops = routeIdObjectMap[selectedRoute].stops;
+            $("#stopSelect").html("");
+            for(var i=0; i<stops.length; i++){
+              $("#stopSelect").append("<option stopid = '"+ stops[i].stopId  +"'>"  +  stops[i].stopName + "</option>");
+            }
+          });
+        $("#goButton").click(function(){
+                postToEricsson({
+                  "longitude": 55.578545,
+                  "latitude": 14.254875,
+                  "accuracy": 6
+                }, "/remoteservices/v1/vehicle/bus_info/view/1TX123456789011223", function(data){
+                    getFromEricsson("/remoteservices/v1/vehicle/status/1TX123456789011223/"+data.requestId, function(requestedData){
+                      console.log(JSON.stringify(requestedData));
+                      var propertiesToDisplay = null;
+                      var requestedStops = requestedData.statusReport.stops;
+                      var selectedStop = $( "#stopSelect" ).find(":selected").attr("stopid");
+                      console.log(selectedStop);
+                      var selectedStopIndex = 0;
+                      for(var i=0; i<requestedStops.length; i++){
+                        var stopToCheck = requestedStops[i];
+                        if(stopToCheck.stopId == selectedStop){
+                          selectedStopIndex = i;
+                          propertiesToDisplay = {
+                              "Stop Name": stopToCheck.stopName,
+                              "Stop ID": stopToCheck.stopId,
+                              "Number of Benches": stopToCheck.bench,
+                              "Number of People Waiting": stopToCheck.load,
+                              "Timestamp": requestedData.requestTime
+                          };
+                        }
+                      }
+                      for(var j=0; j<requestedStops.length; j++){
+                        stopToCheck = requestedStops[j];
+                        if(stopToCheck.stopId == requestedData.statusReport.currentStopId){
+                          propertiesToDisplay["Bus is Currently At"] = stopToCheck.stopName;
+                          propertiesToDisplay["How Many Stops to Go"] = selectedStopIndex > j ? selectedStopIndex - j : "wait for next bus";
+
+                        }
+                      }
+
+
+                      var template = _.template(
+                          $( "#ericssonProperties" ).html()
+                          );
+                          $( "#stopData" ).html("").append(
+                              template( {"properties": propertiesToDisplay })
+                            ).append('<button id="goButton" type="button" class="btn btn-danger">Halt for me!</button>');
+
+
+
+                    })
+
+                });
+        });
+
+      });
+
+
+    </script>
+
+</body>
+
+</html>
