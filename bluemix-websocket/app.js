@@ -3,10 +3,17 @@ var statusReport = {"statusReport":{"direction": "front", "stops":[{"stopName":"
 
 
 var WebSocketServer = require('ws').Server;
-
+var http = require("http")
+var express = require("express")
+var app = express()
  var port = (process.env.VCAP_APP_PORT || 8888);
 
- wss = new WebSocketServer({port: port});
+ app.use(express.static(__dirname + "/"))
+
+ var server = http.createServer(app)
+ server.listen(port)
+
+ wss = new WebSocketServer({server: server});
  wss.on('connection', function(ws) {
      ws.on('message', function(message) {
          console.log('received: %s', message);
