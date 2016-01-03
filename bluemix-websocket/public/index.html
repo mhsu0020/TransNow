@@ -63,6 +63,7 @@
                 <select id="stopSelect"></select><br><br>
                 <button id="goButton" type="button" class="btn btn-primary">Go</button>
                 <div id="stopData"></div>
+                <div id="liveData"></div>
             </div>
         </div>
         <!-- /.row -->
@@ -81,7 +82,7 @@
 <script type="text/template" id="ericssonProperties">
   <ul class="list-group">
   <% _.each(_.keys(properties), function(propertyKey) { %>
-       <li class="list-group-item"><b><%= propertyKey %>: </b><%= properties[propertyKey] %></li>
+       <li class="list-group-item" name="<%= propertyKey %>"><b><%= propertyKey %>: </b><%= properties[propertyKey] %></li>
    <% }); %>
  </ul>
 </script>
@@ -159,7 +160,6 @@ function displayStopData(requestedData){
     }
   }
 
-
   var template = _.template(
       $( "#ericssonProperties" ).html()
       );
@@ -194,6 +194,7 @@ function displayStopData(requestedData){
             }
           });
         $("#goButton").click(function(){
+                $("#liveData").html("").append('  <ul class="list-group"><li class="list-group-item" name="temperature">loading...</li></ul>');
                 postToEricsson({
                   "longitude": 55.578545,
                   "latitude": 14.254875,
@@ -226,7 +227,9 @@ function displayStopData(requestedData){
                                       $( "#stopData" ).append('<button id="haltButton" type="button" class="btn btn-danger">Halt for me!</button>');
                                       halted = true;
                                       $("#haltButton").click(function(){
-                                         alert("halt requested!!");
+                                        $.post( "http://transnow.mybluemix.net/halt/"+selectedStop, function( data ) {
+                                                console.log("updated halt count");
+                                            });
                                       });
                                     }
 
@@ -241,6 +244,17 @@ function displayStopData(requestedData){
                     })
 
                 });
+
+                var exampleSocket = new WebSocket("ws://run-east.att.io/986d8db9abc97/f4c2e3f8aa87/de1f74be113ac84/in/flow/m2x");
+                exampleSocket.onmessage = function (event) {
+                      var value = JSON.parse(event.data);
+                      var attributeName = "temperature";
+                      var dataObject = value["temperature"];
+                      $( "li[name='"+ attributeName +"']" ).html("<b>"+attributeName+": </b>"+dataObject.value+" "+dataObject.unit);
+                      console.log(JSON.stringify(value));
+
+                }
+
         });
 
       });

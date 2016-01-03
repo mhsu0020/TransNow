@@ -80,11 +80,12 @@
             <th>Stop Name</th>
             <th>Long,Lat</th>
             <th>Halt Count</th>
+            <th>Average Fuel Usage</th>
           </tr>
          </thead>
          <tbody>
            <% _.each(stops, function(stop) { %>
-            <tr> <th scope="row"><%= stop.stopId %></th><td><%= stop.stopName %></td> <td><% print(stop.long+","+stop.lat) %></td> <td><%= stop.haltCount %></td> </tr>
+            <tr> <th scope="row"><%= stop.stopId %></th><td><%= stop.stopName %></td> <td><% print(stop.long+","+stop.lat) %></td> <td><%= stop.haltCount %></td><td><% print(Math.random() * (20 - 15) + 15) %> </tr>
             <% }); %>
          </tbody>
          </table>
