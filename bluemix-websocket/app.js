@@ -6,10 +6,18 @@ var WebSocketServer = require('ws').Server;
 var http = require("http")
 var express = require("express")
 var app = express()
- var port = (process.env.VCAP_APP_PORT || 8888);
-
+var port = (process.env.VCAP_APP_PORT || 8888);
+var stopIdHaltCount = {};
  app.use(express.static(__dirname + "/"))
-
+ app.post('/halt/:id', function (req, res) {
+   var stopId = req.params.id;
+   if(!stopIdHaltCount[stopId]){
+     stopIdHaltCount[stopId] = 1;
+   } else{
+     stopIdHaltCount[stopId]++;
+   }
+   res.send(stopIdHaltCount[stopId]);
+ });
  var server = http.createServer(app)
  server.listen(port)
 
@@ -31,6 +39,11 @@ setInterval(function(){
   var currentTimeInMiliSeconds = d.getTime();
   for(var k = 0; k< statusReport.statusReport.stops.length; k++){
      statusReport.statusReport.stops[k].timestamp = currentTimeInMiliSeconds;
+     if(statusReport.statusReport.stops[k].stopId in stopIdHaltCount){
+       statusReport.statusReport.stops[k].haltCount = stopIdHaltCount[statusReport.statusReport.stops[k].stopId];
+     } else{
+       statusReport.statusReport.stops[k].haltCount = 0;
+     }
   }
   wss.clients.forEach(function each(client) {
     client.send(JSON.stringify(statusReport));
