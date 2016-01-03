@@ -63,7 +63,7 @@
         <div class="row">
             <div id="content" class="col-lg-12 text-center">
                 <h1>TransNow</h1>
-                <h2>Stay Inside or Go to Station Now?</h2>
+                <h2>Catch the Bus or Stop It</h2>
                 <span>Select Route: </span>
                 <select id="routeSelect"></select>
                 <br><br>
@@ -222,6 +222,7 @@ function getFromEricsson(path, callback){
                                     var selectedStopIndex = 0;
                                     if( requestedData.statusReport.currentStopId == selectedStop && !halted){
                                       alert("Bus is at station!!!!!");
+                                      //notifyMe("Bus is at station!!!!");
                                       $( "#stopData" ).append('<button id="goButton" type="button" class="btn btn-danger">Halt for me!</button>');
                                       halted = true;
                                     }
@@ -240,7 +241,31 @@ function getFromEricsson(path, callback){
         });
 
       });
+function notifyMe(data) {
+  // Let's check if the browser supports notifications
+  if (!("Notification" in window)) {
+    alert("This browser does not support system notifications");
+  }
 
+  // Let's check whether notification permissions have already been granted
+  else if (Notification.permission === "granted") {
+    // If it's okay let's create a notification
+    var notification = new Notification(data);
+  }
+
+  // Otherwise, we need to ask the user for permission
+  else if (Notification.permission !== 'denied') {
+    Notification.requestPermission(function (permission) {
+      // If the user accepts, let's create a notification
+      if (permission === "granted") {
+        var notification = new Notification(data);
+      }
+    });
+  }
+
+  // Finally, if the user has denied notifications and you
+  // want to be respectful there is no need to bother them any more.
+}
 
     </script>
 
