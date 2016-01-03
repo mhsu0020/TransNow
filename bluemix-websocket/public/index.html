@@ -62,7 +62,6 @@
 
         <div class="row">
             <div id="content" class="col-lg-12 text-center">
-                <h1>TransNow</h1>
                 <h2>Catch the Bus or Stop It</h2>
                 <span>Select Route: </span>
                 <select id="routeSelect"></select>
@@ -137,6 +136,44 @@ function getFromEricsson(path, callback){
 });
 
 }
+
+function displayStopData(requestedData){
+  var propertiesToDisplay = null;
+  var requestedStops = requestedData.statusReport.stops;
+  var selectedStop = $( "#stopSelect" ).find(":selected").attr("stopid");
+  console.log(selectedStop);
+  var selectedStopIndex = 0;
+  for(var i=0; i<requestedStops.length; i++){
+    var stopToCheck = requestedStops[i];
+    if(stopToCheck.stopId == selectedStop){
+      selectedStopIndex = i;
+      propertiesToDisplay = {
+          "Stop Name": stopToCheck.stopName,
+          "Stop ID": stopToCheck.stopId,
+          "Number of Benches": stopToCheck.bench,
+          "Number of People Waiting": stopToCheck.load,
+          "Timestamp": requestedData.requestTime
+      };
+    }
+  }
+  for(var j=0; j<requestedStops.length; j++){
+    stopToCheck = requestedStops[j];
+    if(stopToCheck.stopId == requestedData.statusReport.currentStopId){
+      propertiesToDisplay["Bus is Currently At"] = stopToCheck.stopName;
+      propertiesToDisplay["How Many Stops to Go"] = selectedStopIndex > j ? selectedStopIndex - j : "wait for next bus";
+
+    }
+  }
+
+
+  var template = _.template(
+      $( "#ericssonProperties" ).html()
+      );
+      $( "#stopData" ).html("").append(
+          template( {"properties": propertiesToDisplay })
+        );
+
+}
     $(function() {
       var routesForEachStop = {};
       var routeIdObjectMap = {};
@@ -170,40 +207,8 @@ function getFromEricsson(path, callback){
                 }, "/remoteservices/v1/vehicle/bus_info/view/1TX123456789011223", function(data){
                     getFromEricsson("/remoteservices/v1/vehicle/status/1TX123456789011223/"+data.requestId, function(requestedData){
                       console.log(JSON.stringify(requestedData));
-                      var propertiesToDisplay = null;
-                      var requestedStops = requestedData.statusReport.stops;
-                      var selectedStop = $( "#stopSelect" ).find(":selected").attr("stopid");
-                      console.log(selectedStop);
-                      var selectedStopIndex = 0;
-                      for(var i=0; i<requestedStops.length; i++){
-                        var stopToCheck = requestedStops[i];
-                        if(stopToCheck.stopId == selectedStop){
-                          selectedStopIndex = i;
-                          propertiesToDisplay = {
-                              "Stop Name": stopToCheck.stopName,
-                              "Stop ID": stopToCheck.stopId,
-                              "Number of Benches": stopToCheck.bench,
-                              "Number of People Waiting": stopToCheck.load,
-                              "Timestamp": requestedData.requestTime
-                          };
-                        }
-                      }
-                      for(var j=0; j<requestedStops.length; j++){
-                        stopToCheck = requestedStops[j];
-                        if(stopToCheck.stopId == requestedData.statusReport.currentStopId){
-                          propertiesToDisplay["Bus is Currently At"] = stopToCheck.stopName;
-                          propertiesToDisplay["How Many Stops to Go"] = selectedStopIndex > j ? selectedStopIndex - j : "wait for next bus";
+                      displayStopData(requestedData);
 
-                        }
-                      }
-
-
-                      var template = _.template(
-                          $( "#ericssonProperties" ).html()
-                          );
-                          $( "#stopData" ).html("").append(
-                              template( {"properties": propertiesToDisplay })
-                            );
                             //.append('<button id="goButton" type="button" class="btn btn-danger">Halt for me!</button>');
                             //Check Bus Status
                             setInterval(function(){
@@ -215,6 +220,7 @@ function getFromEricsson(path, callback){
                               }, "/remoteservices/v1/vehicle/bus_info/view/1TX123456789011223", function(data){
                                   getFromEricsson("/remoteservices/v1/vehicle/status/1TX123456789011223/"+data.requestId, function(requestedData){
                                     console.log(JSON.stringify(requestedData));
+                                    displayStopData(requestedData);
                                     var propertiesToDisplay = null;
                                     var requestedStops = requestedData.statusReport.stops;
                                     var selectedStop = $( "#stopSelect" ).find(":selected").attr("stopid");
@@ -223,8 +229,11 @@ function getFromEricsson(path, callback){
                                     if( requestedData.statusReport.currentStopId == selectedStop && !halted){
                                       alert("Bus is at station!!!!!");
                                       //notifyMe("Bus is at station!!!!");
-                                      $( "#stopData" ).append('<button id="goButton" type="button" class="btn btn-danger">Halt for me!</button>');
+                                      $( "#stopData" ).append('<button id="haltButton" type="button" class="btn btn-danger">Halt for me!</button>');
                                       halted = true;
+                                      $("#haltButton").click(function(){
+                                         alert("halt requested!!");
+                                      });
                                     }
 
                                   })
