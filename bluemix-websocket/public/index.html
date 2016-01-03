@@ -62,6 +62,7 @@
                 <br><br>
                 <select id="stopSelect"></select><br><br>
                 <button id="goButton" type="button" class="btn btn-primary">Go</button>
+                <br><br>
                 <div id="stopData"></div>
                 <div id="liveData"></div>
             </div>
@@ -224,7 +225,7 @@ function displayStopData(requestedData){
                                     if( requestedData.statusReport.currentStopId == selectedStop && !halted){
                                       alert("Bus is at station!!!!!");
                                       //notifyMe("Bus is at station!!!!");
-                                      $( "#stopData" ).append('<button id="haltButton" type="button" class="btn btn-danger">Halt for me!</button>');
+                                      $( "#liveData" ).append('<button id="haltButton" type="button" class="btn btn-danger">Halt for me!</button>');
                                       halted = true;
                                       $("#haltButton").click(function(){
                                         $.post( "http://transnow.mybluemix.net/halt/"+selectedStop, function( data ) {
