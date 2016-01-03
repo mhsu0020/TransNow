@@ -202,7 +202,33 @@ function getFromEricsson(path, callback){
                           );
                           $( "#stopData" ).html("").append(
                               template( {"properties": propertiesToDisplay })
-                            ).append('<button id="goButton" type="button" class="btn btn-danger">Halt for me!</button>');
+                            );
+                            //.append('<button id="goButton" type="button" class="btn btn-danger">Halt for me!</button>');
+                            //Check Bus Status
+                            setInterval(function(){
+                              console.log("timeout");
+                              postToEricsson({
+                                "longitude": 55.578545,
+                                "latitude": 14.254875,
+                                "accuracy": 6
+                              }, "/remoteservices/v1/vehicle/bus_info/view/1TX123456789011223", function(data){
+                                  getFromEricsson("/remoteservices/v1/vehicle/status/1TX123456789011223/"+data.requestId, function(requestedData){
+                                    console.log(JSON.stringify(requestedData));
+                                    var propertiesToDisplay = null;
+                                    var requestedStops = requestedData.statusReport.stops;
+                                    var selectedStop = $( "#stopSelect" ).find(":selected").attr("stopid");
+                                    console.log(selectedStop);
+                                    var selectedStopIndex = 0;
+                                    if( requestedData.statusReport.currentStopId == selectedStop){
+                                      alert("Bus is at station!!!!!");
+                                      $( "#stopData" ).append('<button id="goButton" type="button" class="btn btn-danger">Halt for me!</button>');
+                                    }
+
+                                  })
+
+                              });
+
+                             }, 3000);
 
 
 
